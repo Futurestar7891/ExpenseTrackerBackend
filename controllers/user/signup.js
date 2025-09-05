@@ -73,12 +73,13 @@ const signup = async (req, res) => {
     // Save OTP and temporary user data
     await otpSchema.create({ name, email, password, otp, expires: expiry });
 
-    // Send OTP email
+   
     const emailResult = await sendOtpEmail(email, otp);
     if (!emailResult.success) {
       return res.status(500).json({
         success: false,
         message: "Failed to send OTP. Try again later.",
+        additional:emailResult
       });
     }
 
