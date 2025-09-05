@@ -20,6 +20,10 @@ app.use(
   })
 );
 
+app.get("/",()=>{
+  res.send("hello");
+})
+
 app.use("/api", userRoutes);
 app.use("/api", expenseRoutes);
 const PORT = process.env.PORT || 3000;
