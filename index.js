@@ -20,9 +20,10 @@ app.use(
   })
 );
 
-app.get("/",()=>{
+app.get("/", (req, res) => {
   res.send("hello");
-})
+});
+
 
 app.use("/api", userRoutes);
 app.use("/api", expenseRoutes);
