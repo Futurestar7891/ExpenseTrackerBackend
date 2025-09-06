@@ -1,17 +1,20 @@
-const nodemailer = require("nodemailer");
+const dotenv=require("dotenv");
 const userSchema = require("../../models/user");
 const otpSchema = require("../../models/otp");
 const bcrypt=require("bcryptjs");
 const { userRegistrationValidation } = require("../../validation");
-
+dotenv.config();
 const sgMail=require("@sendgrid/mail");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendOtpEmail = async (email, otp) => {
   try {
+    console.log("hello");
+    console.log(process.env.SENDGRID_API_KEY,process.env.SENDGRID_EMAIL);
     const msg = {
       to: email,
       from: process.env.SENDGRID_EMAIL, 
+       subject: "Your OTP Code 🔐",
       text: `Your OTP is ${otp}. It is valid for 10 minutes.`,
       html: `<h2>🔐 OTP Verification</h2>
              <p>Your OTP is: <strong>${otp}</strong></p>
@@ -70,7 +73,7 @@ const signup = async (req, res) => {
     // Save OTP and temporary user data
     await otpSchema.create({ name, email, password, otp, expires: expiry });
 
-   
+   console.log("reacher");
     const emailResult = await sendOtpEmail(email, otp);
     if (!emailResult.success) {
       return res.status(500).json({
