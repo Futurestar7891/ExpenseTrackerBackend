@@ -6,7 +6,7 @@ const { userLoginValidation,resetPasswordValidation } = require("../../validatio
 const login = async (req,res) => {
   try {
     const validatebody = userLoginValidation.safeParse(req.body);
-
+    console.log("hello");
     if (!validatebody.success) {
       return res.status(400).json({
         success: false,

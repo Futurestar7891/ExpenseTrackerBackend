@@ -9,7 +9,12 @@ const expenseRoutes = require("./routes/expense");
 dotenv.config({ override: true });
 const app = express();
 connectDB();
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true, 
+  })
+);
 app.use(express.json());
 app.use(cookieparser());
 app.use(
