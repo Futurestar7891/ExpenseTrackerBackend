@@ -1,8 +1,7 @@
-const User=require("../../models/user");
-const Expense=require("../../models/expense");
-const bcrypt=require("bcryptjs");
+const User = require("../../models/user");
+const Expense = require("../../models/expense");
+const bcrypt = require("bcryptjs");
 const { changePasswordValidation } = require("../../validation");
-
 
 const changeProfileImage = async (req, res) => {
   try {
@@ -24,7 +23,6 @@ const changeProfileImage = async (req, res) => {
       { new: true }
     ).select("name email photo");
 
-   
     let photoBase64 = null;
     if (user.photo?.data) {
       photoBase64 = `data:${
@@ -32,7 +30,6 @@ const changeProfileImage = async (req, res) => {
       };base64,${user.photo.data.toString("base64")}`;
     }
 
-    
     res.json({
       success: true,
       photo: photoBase64,
@@ -45,41 +42,27 @@ const changeProfileImage = async (req, res) => {
   }
 };
 
-
- const changePassword = async (req, res) => {
+const changePassword = async (req, res) => {
   try {
     const userId = req.user.id;
-     const validatebody = changePasswordValidation.safeParse(req.body);
-  
 
-     if (!validatebody.success) {
-       return res.status(400).json({
-         success: false,
-         message: "Validation error",
-         errors: validatebody.error.issues.map((err) => ({
-           errorfield: err.path[0],
-           message: err.message,
-         })),
-       });
-     }
-    
-
-       const { currentPassword, newPassword } = validatebody.data;
-
+    const { currentPassword, newPassword } = req.body;
 
     const user = await User.findById(userId);
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch)
-      return res.json({
+    if (!isMatch) {
+      console.log("not matched");
+      return res.status(400).json({
         success: false,
-        fielderror:"currentPassword",
+        fielderror: "currentPassword",
         message: "Current password is incorrect",
       });
+    }
 
     if (currentPassword === newPassword)
-      return res.json({
+      return res.status(400).json({
         success: false,
-        fielderror:"newPassword",
+        fielderror: "newPassword",
         message: "New password cannot be same as current",
       });
 
@@ -94,17 +77,13 @@ const changeProfileImage = async (req, res) => {
   }
 };
 
-
 const deleteAccount = async (req, res) => {
   try {
-    
     const userId = req.user.id;
     if (!userId) return res.json({ success: false, message: "Unauthorized" });
 
-
     await Expense.deleteMany({ user: userId });
 
- 
     await User.findByIdAndDelete(userId);
 
     // Clear token cookie
@@ -120,8 +99,7 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-
- const logout = async (req, res) => {
+const logout = async (req, res) => {
   try {
     res.clearCookie("token", { httpOnly: true, sameSite: "strict" });
     res.json({ success: true, message: "Logged out successfully" });
@@ -131,4 +109,4 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-module.exports={changeProfileImage,changePassword,deleteAccount,logout}
+module.exports = { changeProfileImage, changePassword, deleteAccount, logout };
