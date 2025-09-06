@@ -4,31 +4,28 @@ const otpSchema = require("../../models/otp");
 const bcrypt=require("bcryptjs");
 const { userRegistrationValidation } = require("../../validation");
 
+const sgMail=require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 const sendOtpEmail = async (email, otp) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.Gmail,
-        pass: process.env.Password,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.Gmail,
+    const msg = {
       to: email,
-      subject: "Your OTP Code",
+      from: process.env.SENDGRID_EMAIL, 
       text: `Your OTP is ${otp}. It is valid for 10 minutes.`,
+      html: `<h2>🔐 OTP Verification</h2>
+             <p>Your OTP is: <strong>${otp}</strong></p>
+             <p>This code will expire in 10 minutes.</p>`,
     };
 
-    await transporter.sendMail(mailOptions);
+    await sgMail.send(msg);
+
     return { success: true, message: "OTP sent successfully" };
   } catch (error) {
-    console.error("Error sending OTP:", error);
+    console.error("Error sending OTP:", error.response?.body || error.message);
     return { success: false, message: "Failed to send OTP" };
   }
 };
-
 // Signup route
 const signup = async (req, res) => {
   try {
