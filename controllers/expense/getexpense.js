@@ -1,32 +1,13 @@
 const expenseSchema = require("../../models/expense");
 const userSchema = require("../../models/user");
 const mongoose = require("mongoose");
+const moment = require("moment-timezone");
 
-// UTC -> IST
-const toIST = (date) => {
-  const istOffset = 5.5 * 60;
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  return new Date(utc + istOffset * 60000);
-};
-
-// Parse dd-mm-yyyy -> IST start/end of day
-const parseDateToISTRange = (d, isEnd = false) => {
-  const [year, month, day] = d.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const istDate = toIST(date);
-  istDate.setHours(
-    isEnd ? 23 : 0,
-    isEnd ? 59 : 0,
-    isEnd ? 59 : 0,
-    isEnd ? 999 : 0
-  );
-  return istDate;
-};
 
 const getExpenses = async (req, res) => {
   try {
     const userId = req.user.id;
-    let { categories, minAmount, maxAmount, startDate, endDate } = req.query;
+    let { categories, minAmount, maxAmount, startDate, endDate,timezone } = req.query;
 
     const userExist = await userSchema.findById(userId);
     if (!userExist) {
@@ -51,32 +32,44 @@ const getExpenses = async (req, res) => {
       if (maxAmount != null) filterQuery.amount.$lte = Number(maxAmount);
     }
 
-    // Dates
-    const start = startDate
-      ? parseDateToISTRange(startDate)
-      : toIST(new Date(userExist.createdAt));
-    const end = endDate
-      ? parseDateToISTRange(endDate, true)
-      : toIST(new Date());
+   const registrationDate = userExist.createdAt; 
+   const todayUtc = new Date();
 
-    filterQuery.date = { $gte: start, $lte: end };
+   console.log(startDate,"jhfjhd");
 
-    const fetchexpenses = await expenseSchema
-      .find(filterQuery)
-      .sort({ date: -1 });
+   const startUtc = startDate
+     ? moment
+         .tz(startDate, "YYYY/MM/DD", timezone)
+         .startOf("day")
+         .utc()
+         .toDate()
+     : registrationDate;
 
-    const expensesInIST = fetchexpenses.map((exp) => {
-      const obj = exp.toObject();
-      obj.date = toIST(new Date(obj.date));
-      return obj;
-    });
+   const endUtc = endDate
+     ? moment.tz(endDate, "YYYY/MM/DD", timezone).endOf("day").utc().toDate()
+     : todayUtc;
+ 
+     
+  filterQuery.date = { $gte: startUtc, $lte: endUtc };
 
-    return res.status(200).json({
-      success: true,
-      count: expensesInIST.length,
-      expenses: expensesInIST,
-      daterange: { startDate: start, endDate: end },
-    });
+  const fetchedExpenses = await expenseSchema
+  .find(filterQuery)
+  .sort({ date: -1 });
+
+
+   const localStartDate = moment(startUtc).tz(timezone).format("DD/MM/YYYY");
+   const localEndDate = moment(endUtc).tz(timezone).format("DD/MM/YYYY");
+
+   console.log(localStartDate);
+   console.log(localEndDate);
+
+   return res.status(200).json({
+     success: true,
+     count: fetchedExpenses.length,
+     expenses: fetchedExpenses,
+     daterange: { startDate: localStartDate, endDate: localEndDate },
+   });
+
   } catch (error) {
     console.error(error);
     return res
