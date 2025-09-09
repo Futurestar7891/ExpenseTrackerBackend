@@ -9,6 +9,8 @@ const getExpenses = async (req, res) => {
     const userId = req.user.id;
     let { categories, minAmount, maxAmount, startDate, endDate,timezone } = req.query;
 
+     console.log("in backend ",startDate);
+
     const userExist = await userSchema.findById(userId);
     if (!userExist) {
       return res
@@ -35,7 +37,7 @@ const getExpenses = async (req, res) => {
    const registrationDate = userExist.createdAt; 
    const todayUtc = new Date();
 
-   console.log(startDate,"jhfjhd");
+  
 
    const startUtc = startDate
      ? moment

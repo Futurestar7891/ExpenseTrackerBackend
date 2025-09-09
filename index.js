@@ -25,8 +25,34 @@ app.use(
   })
 );
 
+
+setInterval(() => {
+  fetch("https://expensetrackerbackend-1-xbde.onrender.com")
+    .then((res) => {
+      return res.json();
+    })
+    .then((data) => {
+      console.log(data.success);
+    })
+    .catch((error) => {
+      console.error("Ping failed:", error);
+    });
+}, 8 * 60 * 1000);  // every 8 minutes
+
+
+// endpoint to awake the server
 app.get("/", (req, res) => {
-  res.send("hello");
+  try {
+    res.status(200).json({
+      success:true,
+      message:"ping the server"
+    })
+  } catch (error) {
+    res.status(500).json({
+      success:false,
+      message:error
+    })
+  }
 });
 
 
